@@ -1,0 +1,7 @@
+
+frontend/buildbeacon/build/*
+frontend/buildbeacon/.dart_tool/*
+server/.dart_tool/*
+server/storage/artifacts/*
+server/storage/uploads/*
+server/workspace/*
