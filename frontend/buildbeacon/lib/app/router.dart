@@ -4,6 +4,7 @@ import 'package:buildbeacon/presentation/screens/dashboard_screen.dart';
 import 'package:buildbeacon/presentation/screens/new_build_screen.dart';
 import 'package:buildbeacon/presentation/screens/job_detail_screen.dart';
 import 'package:buildbeacon/presentation/screens/settings_screen.dart';
+import 'package:buildbeacon/presentation/screens/feedback_screen.dart';
 
 /// Application router configuration
 final appRouter = GoRouter(
@@ -53,6 +54,16 @@ final appRouter = GoRouter(
       pageBuilder: (context, state) => MaterialPage(
         key: state.pageKey,
         child: const SettingsScreen(),
+      ),
+    ),
+
+    // Feedback
+    GoRoute(
+      path: '/feedback',
+      name: 'feedback',
+      pageBuilder: (context, state) => MaterialPage(
+        key: state.pageKey,
+        child: const FeedbackScreen(),
       ),
     ),
   ],
@@ -115,4 +126,5 @@ extension AppRouterExtension on BuildContext {
   void goToNewBuild() => go('/new-build');
   void goToJobDetail(String jobId) => go('/jobs/$jobId');
   void goToSettings() => go('/settings');
+  void goToFeedback() => go('/feedback');
 }

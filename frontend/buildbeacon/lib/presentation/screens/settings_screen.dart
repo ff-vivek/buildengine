@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:buildbeacon/theme.dart';
 import 'package:buildbeacon/utils/constants.dart';
+import 'package:buildbeacon/app/router.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -82,6 +83,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: Icons.info_outline,
               children: [
                 _buildAboutInfo(context),
+              ],
+            ),
+            _buildSection(
+              context,
+              title: 'Support & Feedback',
+              icon: Icons.support_outlined,
+              children: [
+                _buildFeedbackTile(context),
               ],
             ),
             const SizedBox(height: 32),
@@ -398,6 +407,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFeedbackTile(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return ListTile(
+      leading: Icon(
+        Icons.feedback_outlined,
+        color: colorScheme.primary,
+      ),
+      title: const Text('Send Feedback'),
+      subtitle: const Text('Share your thoughts and suggestions'),
+      trailing: Icon(
+        Icons.arrow_forward_ios,
+        size: 16,
+        color: colorScheme.onSurfaceVariant,
+      ),
+      onTap: () => context.goToFeedback(),
     );
   }
 }

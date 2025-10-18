@@ -14,7 +14,8 @@ class BuildApiClient {
   }) : _dio = Dio() {
     _dio.options.baseUrl = baseUrl;
     _dio.options.connectTimeout = const Duration(seconds: 30);
-    _dio.options.receiveTimeout = const Duration(seconds: 30);
+    _dio.options.receiveTimeout = const Duration(minutes: 5); // Increased for large uploads
+    _dio.options.sendTimeout = const Duration(minutes: 5); // Added send timeout
 
     // Add API key if provided
     if (apiKey != null) {
@@ -250,6 +251,86 @@ class BuildApiClient {
         filename: filename,
         contentType: contentType,
       );
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Submit feedback
+  Future<Map<String, dynamic>> submitFeedback({
+    required String message,
+    required String email,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/v1/feedback',
+        data: {
+          'message': message,
+          'email': email,
+        },
+      );
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Get feedback list (admin endpoint)
+  Future<Map<String, dynamic>> getFeedbackList({
+    int page = 1,
+    int limit = 20,
+    String? status,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'limit': limit,
+      };
+      
+      if (status != null) {
+        queryParams['status'] = status;
+      }
+
+      final response = await _dio.get(
+        '/v1/feedback',
+        queryParameters: queryParams,
+      );
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Get specific feedback by ID (admin endpoint)
+  Future<Map<String, dynamic>> getFeedback(String feedbackId) async {
+    try {
+      final response = await _dio.get('/v1/feedback/$feedbackId');
+      return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Update feedback status (admin endpoint)
+  Future<Map<String, dynamic>> updateFeedback({
+    required String feedbackId,
+    required String status,
+    String? response,
+  }) async {
+    try {
+      final data = <String, dynamic>{
+        'status': status,
+      };
+      
+      if (response != null) {
+        data['response'] = response;
+      }
+
+      final dioResponse = await _dio.put(
+        '/v1/feedback/$feedbackId',
+        data: data,
+      );
+      return dioResponse.data;
     } catch (e) {
       throw _handleError(e);
     }

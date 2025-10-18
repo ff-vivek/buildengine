@@ -11,10 +11,12 @@
 class ApiTimeoutsConfig {
   final Duration connectTimeout;
   final Duration receiveTimeout;
+  final Duration sendTimeout;
 
   const ApiTimeoutsConfig({
     this.connectTimeout = const Duration(seconds: 30),
-    this.receiveTimeout = const Duration(seconds: 30),
+    this.receiveTimeout = const Duration(minutes: 5), // Increased for large uploads
+    this.sendTimeout = const Duration(minutes: 5), // Added for upload operations
   });
 }
 

@@ -1,7 +1,7 @@
 /// Application constants
 class AppConstants {
   // API Configuration
-  static const String apiBaseUrl = 'http://127.0.0.1:8788';
+  static const String apiBaseUrl = 'http://192.168.0.104:8788';
   static const String? apiKey = null; // Set via environment or config
   
   // File Upload Constraints
