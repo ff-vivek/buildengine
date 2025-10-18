@@ -1,0 +1,151 @@
+# BuildEngine Server Configuration File
+# This file contains all configuration options for the BuildEngine server
+
+# Server Configuration
+server:
+  # Host address to bind to (0.0.0.0 for all interfaces)
+  host: "0.0.0.0"
+  
+  # Port to listen on
+  port: 8080
+  
+  # Maximum request size in bytes (default: 100MB)
+  max_request_size: 104857600
+  
+  # Request timeout in seconds
+  timeout: 300
+
+# Database Configuration
+database:
+  # Path to SQLite database file
+  path: "/var/lib/buildengine/buildengine.db"
+  
+  # Database connection pool size
+  pool_size: 10
+  
+  # Enable database logging
+  enable_logging: false
+
+# Storage Configuration
+storage:
+  # Local storage path for uploads and artifacts
+  local_path: "/var/lib/buildengine/storage"
+  
+  # Workspace directory for build jobs
+  workspace_path: "/var/lib/buildengine/workspace"
+  
+  # Maximum storage size in bytes (default: 10GB)
+  max_storage_size: 10737418240
+  
+  # Cleanup old artifacts after days (0 = disabled)
+  cleanup_after_days: 30
+
+# Logging Configuration
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR, SEVERE
+  level: "INFO"
+  
+  # Log file path
+  file: "/var/log/buildengine/buildengine.log"
+  
+  # Maximum log file size in bytes (default: 100MB)
+  max_file_size: 104857600
+  
+  # Number of log files to keep
+  max_files: 5
+  
+  # Enable console logging
+  enable_console: true
+
+# Flutter Configuration
+flutter:
+  # Path to Flutter SDK
+  sdk_path: "/opt/dart-sdk"
+  
+  # Default Flutter version for builds
+  default_version: "3.24.0"
+  
+  # Enable Flutter version management
+  enable_version_management: true
+
+# Build Configuration
+build:
+  # Maximum concurrent build jobs
+  max_concurrent_jobs: 5
+  
+  # Build timeout in seconds (default: 30 minutes)
+  build_timeout: 1800
+  
+  # Enable build caching
+  enable_caching: true
+  
+  # Cache directory
+  cache_directory: "/var/lib/buildengine/cache"
+
+# Security Configuration
+security:
+  # Enable CORS
+  enable_cors: true
+  
+  # Allowed CORS origins (use ["*"] for all origins)
+  allowed_origins: ["*"]
+  
+  # Allowed CORS methods
+  allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+  
+  # Allowed CORS headers
+  allowed_headers: ["Content-Type", "Authorization", "X-Requested-With"]
+  
+  # Enable API key authentication (optional)
+  enable_api_key: false
+  
+  # API key for authentication
+  api_key: ""
+
+# Google Cloud Storage Configuration (optional)
+gcs:
+  # Enable Google Cloud Storage
+  enabled: false
+  
+  # GCS bucket name
+  bucket_name: ""
+  
+  # Path prefix for objects
+  path_prefix: "buildengine/"
+  
+  # Service account key file path
+  service_account_key: ""
+
+# Rate Limiting Configuration
+rate_limiting:
+  # Enable rate limiting
+  enabled: true
+  
+  # Requests per minute per IP
+  requests_per_minute: 60
+  
+  # Burst limit
+  burst_limit: 10
+
+# Health Check Configuration
+health_check:
+  # Enable health check endpoint
+  enabled: true
+  
+  # Health check path
+  path: "/health"
+  
+  # Health check interval in seconds
+  interval: 30
+
+# Metrics Configuration
+metrics:
+  # Enable metrics collection
+  enabled: true
+  
+  # Metrics endpoint path
+  path: "/metrics"
+  
+  # Metrics collection interval in seconds
+  interval: 60
+

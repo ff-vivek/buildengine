@@ -1,0 +1,45 @@
+[Unit]
+Description=BuildEngine Server - Flutter Build Service
+Documentation=https://github.com/your-org/buildengine
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=buildengine
+Group=buildengine
+WorkingDirectory=/opt/buildengine
+ExecStart=/opt/buildengine/bin/buildengine_server --config=/etc/buildengine/config.yaml
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=buildengine
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/buildengine /var/log/buildengine /etc/buildengine /tmp
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+MemoryLimit=2G
+CPUQuota=200%
+
+# Environment variables
+Environment=PATH=/opt/dart-sdk/bin:/usr/local/bin:/usr/bin:/bin
+Environment=DART_SDK=/opt/dart-sdk
+Environment=BUILDENGINE_CONFIG=/etc/buildengine/config.yaml
+Environment=BUILDENGINE_DATA=/var/lib/buildengine
+Environment=BUILDENGINE_LOGS=/var/log/buildengine
+
+[Install]
+WantedBy=multi-user.target
+
