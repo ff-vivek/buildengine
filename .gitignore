@@ -5,3 +5,7 @@ server/.dart_tool/*
 server/storage/artifacts/*
 server/storage/uploads/*
 server/workspace/*
+
+# Build artifacts
+build/
+*.zip
