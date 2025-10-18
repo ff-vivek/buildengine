@@ -78,18 +78,23 @@ The system automatically detects the correct Flutter project directory by lookin
 
 ## Prerequisites
 
-The FlutterFlow CLI must be installed on the server:
+The FlutterFlow CLI will be automatically installed if not available. The system requires:
+
+- Dart SDK installed on the server
+- The system will automatically run: `dart pub global activate flutterflow_cli`
+
+If automatic installation fails, you can manually install it:
 
 ```bash
-npm install -g flutterflow-cli
+dart pub global activate flutterflow_cli
 ```
 
 ## Error Handling
 
-If the FlutterFlow CLI is not installed, the build will fail with a clear error message:
+The system will automatically attempt to install FlutterFlow CLI if it's not available. If automatic installation fails, the build will fail with a clear error message:
 
 ```
-FlutterFlow CLI is not installed. Please install it using: npm install -g flutterflow-cli
+Failed to install FlutterFlow CLI. Please install it manually using: dart pub global activate flutterflow_cli
 ```
 
 If no Flutter project is found in the workspace, the build will fail with:

@@ -113,9 +113,12 @@ class SourceDownloader {
       // Check if FlutterFlow CLI is installed
       await _checkFlutterFlowCLI();
 
+      // Find the flutterflow command
+      String flutterflowCommand = await _findFlutterFlowCommand();
+
       // Build the flutterflow export-code command
       final command = [
-        'flutterflow',
+        flutterflowCommand,
         'export-code',
         '--project',
         source.ffProjectId!,
@@ -153,7 +156,7 @@ class SourceDownloader {
     }
   }
 
-  /// Checks if FlutterFlow CLI is installed and available
+  /// Checks if FlutterFlow CLI is installed and available, installs it if not
   Future<void> _checkFlutterFlowCLI() async {
     try {
       final result = await Process.run('flutterflow', ['-h']);
@@ -162,8 +165,152 @@ class SourceDownloader {
       }
       _logger.info('FlutterFlow CLI is available: ${result.stdout}');
     } catch (e) {
-      throw Exception(
-          'FlutterFlow CLI is not installed. Please install it using: npm install -g flutterflow-cli');
+      _logger.warning('FlutterFlow CLI not found, attempting to install...');
+      await _installFlutterFlowCLI();
+      
+      // Verify installation after attempting to install
+      try {
+        // Try to find flutterflow command using which
+        final whichResult = await Process.run('which', ['flutterflow']);
+        String flutterflowCommand = 'flutterflow';
+        
+        if (whichResult.exitCode == 0) {
+          flutterflowCommand = whichResult.stdout.trim();
+          _logger.info('Found flutterflow command at: $flutterflowCommand');
+        } else {
+          // Try to find it in npm global bin directory
+          final npmBinResult = await Process.run('npm', ['config', 'get', 'prefix']);
+          if (npmBinResult.exitCode == 0) {
+            final npmPrefix = npmBinResult.stdout.trim();
+            final globalBinPath = path.join(npmPrefix, 'bin');
+            final flutterflowPath = path.join(globalBinPath, 'flutterflow');
+            
+            if (await File(flutterflowPath).exists()) {
+              flutterflowCommand = flutterflowPath;
+              _logger.info('Found flutterflow command at npm global bin: $flutterflowCommand');
+            }
+          }
+        }
+        
+        final verifyResult = await Process.run(flutterflowCommand, ['-h']);
+        if (verifyResult.exitCode != 0) {
+          throw Exception('FlutterFlow CLI installation failed or not working properly');
+        }
+        _logger.info('FlutterFlow CLI successfully installed and verified');
+      } catch (verifyError) {
+        throw Exception(
+            'Failed to install FlutterFlow CLI. Please install it manually using: dart pub global activate flutterflow_cli');
+      }
+    }
+  }
+
+  /// Installs FlutterFlow CLI using dart pub global activate
+  Future<void> _installFlutterFlowCLI() async {
+    try {
+      _logger.info('Installing FlutterFlow CLI using dart pub global activate...');
+      
+      // First check if dart is available
+      final dartCheck = await Process.run('dart', ['--version']);
+      if (dartCheck.exitCode != 0) {
+        throw Exception('Dart is not available. Please install Dart SDK first.');
+      }
+      
+      _logger.info('Dart is available: ${dartCheck.stdout}');
+      
+      // Install FlutterFlow CLI globally using dart pub
+      final installResult = await Process.run('dart', ['pub', 'global', 'activate', 'flutterflow_cli']);
+      
+      if (installResult.exitCode != 0) {
+        _logger.severe('dart pub global activate failed: ${installResult.stderr}');
+        throw Exception('Failed to install FlutterFlow CLI: ${installResult.stderr}');
+      }
+      
+      _logger.info('FlutterFlow CLI installation completed: ${installResult.stdout}');
+      
+      // Update PATH by refreshing environment
+      await _refreshEnvironment();
+      
+    } catch (e) {
+      _logger.severe('Failed to install FlutterFlow CLI: $e');
+      rethrow;
+    }
+  }
+
+  /// Finds the flutterflow command path
+  Future<String> _findFlutterFlowCommand() async {
+    try {
+      // Try to find flutterflow command using which
+      final whichResult = await Process.run('which', ['flutterflow']);
+      
+      if (whichResult.exitCode == 0) {
+        final flutterflowCommand = whichResult.stdout.trim();
+        _logger.info('Found flutterflow command at: $flutterflowCommand');
+        return flutterflowCommand;
+      }
+      
+      // Try to find it in dart pub global bin directory
+      final dartBinResult = await Process.run('dart', ['pub', 'global', 'list']);
+      if (dartBinResult.exitCode == 0) {
+        // Check if flutterflow_cli is in the global packages
+        if (dartBinResult.stdout.contains('flutterflow_cli')) {
+          // Get the dart pub global bin directory
+          final dartGlobalResult = await Process.run('dart', ['pub', 'global', 'list', '--executable']);
+          if (dartGlobalResult.exitCode == 0) {
+            final lines = dartGlobalResult.stdout.split('\n');
+            for (final line in lines) {
+              if (line.contains('flutterflow')) {
+                final parts = line.split(' ');
+                if (parts.isNotEmpty) {
+                  final flutterflowCommand = parts.first.trim();
+                  _logger.info('Found flutterflow command in dart global: $flutterflowCommand');
+                  return flutterflowCommand;
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      // Fallback to just 'flutterflow' and hope it's in PATH
+      _logger.warning('Could not find flutterflow command, using default: flutterflow');
+      return 'flutterflow';
+    } catch (e) {
+      _logger.warning('Error finding flutterflow command: $e');
+      return 'flutterflow';
+    }
+  }
+
+  /// Refreshes the environment to pick up newly installed global packages
+  Future<void> _refreshEnvironment() async {
+    try {
+      // Get the dart pub global bin directory
+      final dartGlobalResult = await Process.run('dart', ['pub', 'global', 'list', '--executable']);
+      if (dartGlobalResult.exitCode == 0) {
+        final lines = dartGlobalResult.stdout.split('\n');
+        for (final line in lines) {
+          if (line.contains('flutterflow')) {
+            final parts = line.split(' ');
+            if (parts.isNotEmpty) {
+              final flutterflowPath = parts.first.trim();
+              _logger.info('FlutterFlow CLI found at: $flutterflowPath');
+              break;
+            }
+          }
+        }
+      }
+      
+      // Also check if flutterflow_cli package is installed
+      final dartListResult = await Process.run('dart', ['pub', 'global', 'list']);
+      if (dartListResult.exitCode == 0) {
+        if (dartListResult.stdout.contains('flutterflow_cli')) {
+          _logger.info('FlutterFlow CLI package is installed globally');
+        } else {
+          _logger.warning('FlutterFlow CLI package not found in global packages');
+        }
+      }
+    } catch (e) {
+      _logger.warning('Failed to refresh environment: $e');
+      // Don't throw here as the installation might still work
     }
   }
 
