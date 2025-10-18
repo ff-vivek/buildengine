@@ -1,6 +1,7 @@
 import 'package:sqlite3/sqlite3.dart';
 import 'package:logging/logging.dart';
 import '../models/upload_record.dart';
+import '../models/feedback.dart';
 
 final _logger = Logger('DatabaseService');
 
@@ -40,6 +41,29 @@ class DatabaseService {
     _database.execute('''
       CREATE INDEX IF NOT EXISTS idx_uploads_created_at 
       ON uploads(created_at)
+    ''');
+
+    // Create feedback table
+    _database.execute('''
+      CREATE TABLE IF NOT EXISTS feedback (
+        id TEXT PRIMARY KEY,
+        message TEXT NOT NULL,
+        email TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        response TEXT
+      )
+    ''');
+
+    // Create index for feedback lookups
+    _database.execute('''
+      CREATE INDEX IF NOT EXISTS idx_feedback_status 
+      ON feedback(status)
+    ''');
+
+    _database.execute('''
+      CREATE INDEX IF NOT EXISTS idx_feedback_created_at 
+      ON feedback(created_at)
     ''');
 
     _logger.info('Database tables created/verified');
@@ -214,6 +238,129 @@ class DatabaseService {
     } catch (e) {
       _logger.severe('Failed to get all uploads: $e');
       return [];
+    }
+  }
+
+  /// Store a new feedback record
+  Future<void> storeFeedback(Feedback feedback) async {
+    try {
+      _database.execute('''
+        INSERT INTO feedback (id, message, email, created_at, status, response)
+        VALUES (?, ?, ?, ?, ?, ?)
+      ''', [
+        feedback.id,
+        feedback.message,
+        feedback.email,
+        feedback.createdAt.toIso8601String(),
+        feedback.status ?? 'pending',
+        feedback.response,
+      ]);
+
+      _logger.info('Stored feedback record: ${feedback.id}');
+    } catch (e) {
+      _logger.severe('Failed to store feedback record: $e');
+      rethrow;
+    }
+  }
+
+  /// Get feedback by ID
+  Future<Feedback?> getFeedback(String feedbackId) async {
+    try {
+      final result = _database.select('''
+        SELECT * FROM feedback WHERE id = ?
+      ''', [feedbackId]);
+
+      if (result.isEmpty) {
+        return null;
+      }
+
+      final row = result.first;
+      return Feedback(
+        id: row['id'] as String,
+        message: row['message'] as String,
+        email: row['email'] as String,
+        createdAt: DateTime.parse(row['created_at'] as String),
+        status: row['status'] as String?,
+        response: row['response'] as String?,
+      );
+    } catch (e) {
+      _logger.severe('Failed to get feedback record: $e');
+      return null;
+    }
+  }
+
+  /// Get all feedback with pagination
+  Future<List<Feedback>> getAllFeedback({
+    int page = 1,
+    int limit = 20,
+    String? status,
+  }) async {
+    try {
+      final offset = (page - 1) * limit;
+      String query = '''
+        SELECT * FROM feedback
+      ''';
+      
+      List<dynamic> params = [];
+      
+      if (status != null) {
+        query += ' WHERE status = ?';
+        params.add(status);
+      }
+      
+      query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+      params.addAll([limit, offset]);
+
+      final result = _database.select(query, params);
+
+      return result
+          .map((row) => Feedback(
+                id: row['id'] as String,
+                message: row['message'] as String,
+                email: row['email'] as String,
+                createdAt: DateTime.parse(row['created_at'] as String),
+                status: row['status'] as String?,
+                response: row['response'] as String?,
+              ))
+          .toList();
+    } catch (e) {
+      _logger.severe('Failed to get feedback records: $e');
+      return [];
+    }
+  }
+
+  /// Get feedback count
+  Future<int> getFeedbackCount({String? status}) async {
+    try {
+      String query = 'SELECT COUNT(*) as count FROM feedback';
+      List<dynamic> params = [];
+      
+      if (status != null) {
+        query += ' WHERE status = ?';
+        params.add(status);
+      }
+
+      final result = _database.select(query, params);
+      return result.first['count'] as int;
+    } catch (e) {
+      _logger.severe('Failed to get feedback count: $e');
+      return 0;
+    }
+  }
+
+  /// Update feedback status and response
+  Future<void> updateFeedback(String feedbackId, String status, {String? response}) async {
+    try {
+      _database.execute('''
+        UPDATE feedback 
+        SET status = ?, response = ?
+        WHERE id = ?
+      ''', [status, response, feedbackId]);
+
+      _logger.info('Updated feedback: $feedbackId -> $status');
+    } catch (e) {
+      _logger.severe('Failed to update feedback: $e');
+      rethrow;
     }
   }
 

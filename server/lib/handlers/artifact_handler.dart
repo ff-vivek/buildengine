@@ -86,14 +86,19 @@ class ArtifactHandler {
         );
       }
 
-      // Serve the file directly
-      final bytes = await file.readAsBytes();
+      // Get file size for Content-Length header
+      final fileSize = await file.length();
+      
+      // Stream the file instead of loading it all into memory
+      final stream = file.openRead();
+      
       return Response.ok(
-        bytes,
+        stream,
         headers: {
           'Content-Type': 'application/zip',
           'Content-Disposition': 'attachment; filename="$fileName"',
-          'Content-Length': bytes.length.toString(),
+          'Content-Length': fileSize.toString(),
+          'Accept-Ranges': 'bytes', // Enable range requests for better performance
         },
       );
     } catch (e) {

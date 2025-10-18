@@ -11,6 +11,7 @@ import 'handlers/upload_handler.dart';
 import 'handlers/job_handler.dart';
 import 'handlers/log_handler.dart';
 import 'handlers/artifact_handler.dart';
+import 'handlers/feedback_handler.dart';
 import 'services/storage_service.dart';
 import 'services/job_service.dart';
 import 'services/log_service.dart';
@@ -28,6 +29,7 @@ class BuildEngineServer {
   late final JobHandler _jobHandler;
   late final LogHandler _logHandler;
   late final ArtifactHandler _artifactHandler;
+  late final FeedbackHandler _feedbackHandler;
 
   BuildEngineServer() {
     _storageService = StorageService();
@@ -39,6 +41,7 @@ class BuildEngineServer {
     _jobHandler = JobHandler(_jobService);
     _logHandler = LogHandler(_jobService);
     _artifactHandler = ArtifactHandler(_storageService);
+    _feedbackHandler = FeedbackHandler(_databaseService);
   }
 
   Router get _router {
@@ -76,6 +79,12 @@ class BuildEngineServer {
     router.get('/jobs/<jobId>/artifact', _artifactHandler.getArtifactUrl);
     router.get(
         '/jobs/<jobId>/artifact/download', _artifactHandler.downloadArtifact);
+
+    // Feedback endpoints
+    router.post('/feedback', _feedbackHandler.submitFeedback);
+    router.get('/feedback', _feedbackHandler.getAllFeedback);
+    router.get('/feedback/<feedbackId>', _feedbackHandler.getFeedback);
+    router.put('/feedback/<feedbackId>', _feedbackHandler.updateFeedback);
 
     return router;
   }
@@ -170,7 +179,7 @@ class BuildEngineServer {
   }
 
   Future<void> start({
-    String host = '127.0.0.1',
+    String host = '0.0.0.0',
     int port = 8788,
   }) async {
     // Kill any existing processes on the port

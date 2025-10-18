@@ -450,6 +450,31 @@ The server executes real Flutter builds through the following pipeline:
 5. **Artifact Packaging** → Create downloadable ZIP archives
 6. **Storage** → Save artifacts with secure access URLs
 
+## 🔧 Troubleshooting
+
+### SQLite Library Issues
+
+If you encounter the error `Failed to load dynamic library 'libsqlite3.so'`, this is a common issue on Linux systems where the SQLite library has a different name.
+
+**Solution 1: Use the provided startup script**
+```bash
+# From the project root directory
+./start_server.sh
+```
+
+**Solution 2: Manual fix**
+```bash
+cd server
+mkdir -p lib
+ln -sf /usr/lib/aarch64-linux-gnu/libsqlite3.so.0 lib/libsqlite3.so
+LD_LIBRARY_PATH=./lib:$LD_LIBRARY_PATH dart run bin/buildengine_server.dart
+```
+
+**Solution 3: System-wide fix (requires sudo)**
+```bash
+sudo ln -sf /usr/lib/aarch64-linux-gnu/libsqlite3.so.0 /usr/lib/aarch64-linux-gnu/libsqlite3.so
+```
+
 ## 📞 Support & Documentation
 
 - **API Documentation**: Refer to `docs/api_prd.md` for complete API specification

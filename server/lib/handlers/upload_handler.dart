@@ -81,12 +81,24 @@ class UploadHandler {
 
       Uint8List? fileData;
       String? filename;
+      int totalSize = 0;
 
       await for (final formData in request.multipartFormData) {
         if (formData.name == 'file') {
           final bytes = <int>[];
           await for (final chunk in formData.part) {
             bytes.addAll(chunk);
+            totalSize += chunk.length;
+            
+            // Check size limit during streaming to avoid memory issues
+            const maxSize = 100 * 1024 * 1024; // 100MB
+            if (totalSize > maxSize) {
+              return Response(
+                413,
+                body: jsonEncode({'message': 'File too large. Maximum size is 100MB'}),
+                headers: {'Content-Type': 'application/json'},
+              );
+            }
           }
           fileData = Uint8List.fromList(bytes);
           filename = formData.filename;
@@ -105,16 +117,6 @@ class UploadHandler {
       if (filename != null && !filename.toLowerCase().endsWith('.zip')) {
         return Response.badRequest(
           body: jsonEncode({'message': 'Only ZIP files are supported'}),
-          headers: {'Content-Type': 'application/json'},
-        );
-      }
-
-      // Validate file size (10MB limit)
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      if (fileData.length > maxSize) {
-        return Response(
-          413,
-          body: jsonEncode({'message': 'File too large. Maximum size is 10MB'}),
           headers: {'Content-Type': 'application/json'},
         );
       }
